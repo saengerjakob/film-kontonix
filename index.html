@@ -2,144 +2,321 @@
 <html lang="de">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Was hier wohl ist…</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>KONTONIX — CASH CRASH</title>
 <style>
-  body{
-    margin:0;
-    background:#0c1014;
-    color:#e6d2b0;
-    font-family:Inter,Arial,Helvetica,sans-serif;
-    display:flex;
-    justify-content:center;
-    padding:20px;
+  :root{
+    --bg:#071017;
+    --card:#0f1620;
+    --accent:#b87035;
+    --muted:#9b8a79;
+    --light:#e7d6c0;
   }
-  .wrap{
-    max-width:600px; 
-    text-align:center;
-    padding:20px;
-    background:#11161c;
-    border-radius:16px;
-    box-shadow:0 0 40px rgba(0,0,0,0.4);
-  }
-  h1{margin-top:0;}
-  canvas{
-    background:#1a222c;
-    border-radius:12px;
-    margin-top:16px;
-    width:100%;
-    max-width:560px;
-  }
-  #msg{
-    margin-top:14px;
-    font-size:14px;
-    color:#92806d;
-  }
-  #startBtn{
-    margin-top:18px;
-    background:#b4783a;
-    border:0;
-    padding:10px 16px;
-    color:white;
-    border-radius:8px;
-    font-weight:600;
-    cursor:pointer;
+  html,body{height:100%; margin:0; font-family:Inter,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--light);}
+  .wrap{max-width:720px; margin:18px auto; padding:16px;}
+  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:14px; padding:14px; box-shadow:0 8px 30px rgba(0,0,0,0.5);}
+  h1{margin:6px 0 2px; font-size:20px;}
+  p.lead{margin:0 0 12px; color:var(--muted); font-size:14px;}
+  #hud{display:flex; gap:12px; align-items:center; justify-content:space-between; margin-bottom:10px; flex-wrap:wrap;}
+  .pill{background:#0b1116; padding:8px 12px; border-radius:10px; font-weight:700; color:var(--light); min-width:88px; text-align:center;}
+  #gameArea{width:100%; background:#071219; border-radius:10px; overflow:hidden; touch-action: none;}
+  canvas{display:block; width:100%; height:360px; background:linear-gradient(180deg,#0c1418,#071219); border-radius:10px;}
+  .controls{display:flex; gap:8px; margin-top:12px; justify-content:center; flex-wrap:wrap;}
+  button{background:var(--accent); color:#fff; border:0; padding:10px 14px; border-radius:10px; font-weight:700; cursor:pointer;}
+  button.ghost{background:transparent; border:1px solid rgba(255,255,255,0.04); color:var(--light);}
+  #result{margin-top:12px; text-align:center; color:var(--muted);}
+  .small{font-size:13px; color:var(--muted);}
+  @media (max-width:420px){
+    canvas{height:300px;}
   }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>Was hier wohl ist…?</h1>
-  <p>Willkommen im <b>geheimen Set-Portal</b> der Kontonix Finanz AG.<br>
-  Damit du nicht nur neugierig bist, gibt’s hier ein kleines Spiel.</p>
+  <div class="wrap">
+    <div class="card">
+      <h1>Was hier wohl ist…?</h1>
+      <p class="lead">Geheim-Set-Portal der KONTONIX Finanz AG — Spiel: <strong>KONTONIX CASH CRASH</strong><br>
+      Tipp auf die fallenden Symbole: 💰 = + Punkte, 💥 = -Punkte. Mobile ready — spiele mit Touch.</p>
 
-  <button id="startBtn">Mini-Game starten</button>
+      <div id="hud">
+        <div class="pill">Zeit: <span id="time">20</span>s</div>
+        <div class="pill">Punkte: <span id="score">0</span></div>
+        <div class="pill small">Tip: Finger auf das Symbol drücken</div>
+      </div>
 
-  <canvas id="game" width="560" height="360"></canvas>
-  <div id="msg">Fange fallende Symbole, um die Kontonix-Kurve zu retten!</div>
-</div>
+      <div id="gameArea">
+        <canvas id="canvas"></canvas>
+      </div>
+
+      <div class="controls">
+        <button id="startBtn">Spiel starten</button>
+        <button id="restartBtn" class="ghost" style="display:none">Nochmal</button>
+      </div>
+
+      <div id="result" class="small">Spiel dauert 20 Sekunden. Viel Erfolg — oder so.</div>
+    </div>
+  </div>
 
 <script>
-// ----- Mini Game: Fallende Symbole fangen -----
+/* KONTONIX CASH CRASH — Mobile touch + click kompatibel */
 
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-
-let player = { x: canvas.width/2 - 40, y: canvas.height - 35, w: 80, h: 20 };
-let items = [];
-let score = 0;
-let running = false;
-
-// Steuerung
-document.addEventListener("mousemove", e => {
+// Canvas und DPI-Setup
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+function resizeCanvas(){
+  const ratio = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  player.x = x - player.w/2;
-});
+  canvas.width = Math.floor(rect.width * ratio);
+  canvas.height = Math.floor(rect.height * ratio);
+  ctx.setTransform(ratio,0,0,ratio,0,0);
+  drawStatic();
+}
+window.addEventListener('resize', resizeCanvas);
 
-// Neues Item
-function spawnItem(){
-  items.push({
-    x: Math.random() * (canvas.width - 20),
-    y: -30,
-    speed: 2 + Math.random()*2,
-    symbol: Math.random() < 0.5 ? "💸" : "📉"
+// Elemente HUD
+const timeEl = document.getElementById('time');
+const scoreEl = document.getElementById('score');
+const startBtn = document.getElementById('startBtn');
+const restartBtn = document.getElementById('restartBtn');
+const resultEl = document.getElementById('result');
+
+let items = []; // fallende Objekte
+let playing = false;
+let score = 0;
+let gameTime = 20; // Sekunden
+let spawnRate = 0.035; // Chance pro Frame
+let lastTime = null;
+let elapsed = 0;
+
+// visuelle Assets (Emojis)
+const types = [
+  {sym: '💰', score: 1},
+  {sym: '💰', score: 1},
+  {sym: '📈', score: 2},
+  {sym: '💥', score: -2},
+  {sym: '📉', score: -1}
+];
+
+// Zeichenfunktion — Hintergrund + leichte Kontonix-Optik
+function drawStatic(){
+  // Hintergrund-Gradient
+  const w = canvas.width / (window.devicePixelRatio || 1);
+  const h = canvas.height / (window.devicePixelRatio || 1);
+  ctx.clearRect(0,0,w,h);
+  // leichte Linien (als "Chart" im Hintergrund)
+  ctx.save();
+  ctx.globalAlpha = 0.06;
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 1;
+  for(let i=1;i<6;i++){
+    const y = h * i/6;
+    ctx.beginPath();
+    ctx.moveTo(0,y);
+    ctx.lineTo(w,y);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// Draw Loop
+function draw(){
+  drawStatic();
+  // Items
+  items.forEach(it => {
+    ctx.font = (it.size || 32) + 'px sans-serif';
+    ctx.fillText(it.sym, it.x, it.y);
   });
 }
 
-// Game Loop
-function loop(){
-  if(!running) return;
-
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  // Zeichne Spieler
-  ctx.fillStyle = "#b4783a";
-  ctx.fillRect(player.x, player.y, player.w, player.h);
-
-  // Items bewegen
-  items.forEach((it, i) => {
-    it.y += it.speed;
-    ctx.font = "28px sans-serif";
-    ctx.fillText(it.symbol, it.x, it.y);
-
-    // Kollision
-    if(it.y > player.y - 5 && it.x > player.x - 15 && it.x < player.x + player.w){
-      score++;
+// Update physics
+function update(dt){
+  // move
+  for(let i=items.length-1;i>=0;i--){
+    items[i].y += items[i].speed * dt * 0.06;
+    // remove if offscreen
+    if(items[i].y > canvas.height / (window.devicePixelRatio || 1) + 60){
       items.splice(i,1);
     }
-
-    // Entfernen wenn unten raus
-    if(it.y > canvas.height + 50) items.splice(i,1);
-  });
-
-  // Ab und zu neues Item
-  if(Math.random() < 0.04) spawnItem();
-
-  requestAnimationFrame(loop);
+  }
 }
 
-// Start
-document.getElementById("startBtn").onclick = () => {
-  if(running) return;
-  running = true;
-  score = 0;
+// spawn logic
+function maybeSpawn(){
+  if(Math.random() < spawnRate + Math.min(0.03, elapsed/1000 * 0.005)){
+    const t = types[Math.floor(Math.random()*types.length)];
+    const cw = canvas.width / (window.devicePixelRatio || 1);
+    items.push({
+      sym: t.sym,
+      score: t.score,
+      x: 20 + Math.random() * (cw - 40),
+      y: -20,
+      speed: 1.4 + Math.random()*2.0,
+      size: 28 + Math.random()*18
+    });
+  }
+}
+
+// main loop with time step
+function loop(ts){
+  if(!lastTime) lastTime = ts;
+  const dt = ts - lastTime;
+  lastTime = ts;
+  if(playing){
+    elapsed += dt;
+    maybeSpawn();
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+}
+
+// Touch/click interaction: check item under pointer
+function getPointerPos(evt){
+  const rect = canvas.getBoundingClientRect();
+  let x, y;
+  if(evt.touches && evt.touches.length){
+    x = evt.touches[0].clientX - rect.left;
+    y = evt.touches[0].clientY - rect.top;
+  } else {
+    x = evt.clientX - rect.left;
+    y = evt.clientY - rect.top;
+  }
+  return {x,y};
+}
+
+function handleTap(evt){
+  if(!playing) return;
+  evt.preventDefault();
+  const p = getPointerPos(evt);
+  // detect hit: check items near tap
+  for(let i=items.length-1;i>=0;i--){
+    const it = items[i];
+    const size = it.size || 32;
+    // simple bounding box
+    if(p.x >= it.x - size/1.2 && p.x <= it.x + size/1.2 && p.y >= it.y - size && p.y <= it.y + size/2){
+      // hit!
+      score += it.score;
+      // small visual pop: remove item
+      items.splice(i,1);
+      updateHUD();
+      // quick particle-ish text
+      flashText(it.sym + (it.score>0 ? " +" + it.score : " " + it.score), p.x, p.y, it.score>0 ? '#d8f7d8' : '#f7d8d8');
+      break;
+    }
+  }
+}
+
+// small floating text effect
+function flashText(text, x, y, color){
+  const start = performance.now();
+  function frame(now){
+    const t = (now - start)/700;
+    if(t>1) return;
+    ctx.save();
+    ctx.globalAlpha = 1 - t;
+    ctx.font = '18px sans-serif';
+    ctx.fillStyle = color;
+    ctx.fillText(text, x, y - t*40);
+    ctx.restore();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+// HUD update
+function updateHUD(){
+  scoreEl.textContent = Math.max(0, score);
+}
+
+// start game
+function startGame(){
+  if(playing) return;
+  // reset
   items = [];
-  document.getElementById("msg").textContent = "Spiel läuft… rette die Kontonix-Kurve!";
-  
-  loop();
+  score = 0;
+  elapsed = 0;
+  lastTime = null;
+  playing = true;
+  gameTime = 20;
+  spawnRate = 0.035;
+  updateHUD();
+  timeEl.textContent = gameTime;
+  startBtn.style.display = 'none';
+  restartBtn.style.display = 'none';
+  resultEl.textContent = "Spiel läuft…";
+  // start main loop
+  requestAnimationFrame(loop);
+  // countdown timer
+  const startTs = Date.now();
+  const countdown = setInterval(()=>{
+    const passed = Math.floor((Date.now() - startTs)/1000);
+    const left = Math.max(0, gameTime - passed);
+    timeEl.textContent = left;
+    if(left <= 0){
+      clearInterval(countdown);
+      endGame();
+    }
+  },150);
+}
 
-  // Nach 15 Sekunden endet das Game
-  setTimeout(()=>{
-    running = false;
-    document.getElementById("msg").innerHTML =
-      "Ergebnis: <b>" + score + "</b> gefangene Kurse.<br><br>" +
-      (score > 10 
-        ? "Glückwunsch! Du wärst bei Kontonix vermutlich Abteilungsleiter – oder wenigstens Praktikant am Set."
-        : "Hm… vielleicht besser am Set bleiben. Bankwesen ist nicht für jeden gemacht 😄");
-  }, 15000);
-};
+// end game
+function endGame(){
+  playing = false;
+  // final draw
+  draw();
+  // result text
+  const finalScore = Math.max(0, score);
+  let message;
+  if(finalScore >= 12){
+    message = `Glückwunsch! Du hast KONTONIX vor dem Crash gerettet. (${finalScore} Punkte)`;
+  } else if(finalScore >= 6){
+    message = `Nicht schlecht! Du hast einiges gerettet. (${finalScore} Punkte)`;
+  } else {
+    message = `Ups — KONTONIX macht Urlaub. (${finalScore} Punkte)`;
+  }
+  resultEl.innerHTML = message + '<br><br>' +
+    '<button id="bts" class="ghost">Behind the Scenes</button>';
+  restartBtn.style.display = 'inline-block';
+  // attach BTS handler
+  document.getElementById('bts').addEventListener('click', showBTS);
+}
+
+// Behind the Scenes info
+function showBTS(){
+  resultEl.innerHTML = '<strong>Behind the Scenes — Infos zum Set</strong><br>' +
+    'Du hast das geheime Set-Portal der fiktiven KONTONIX Finanz AG gefunden. ' +
+    'Diese Seite ist Teil der Requisite für den Dreh. Keine echte Bank. ' +
+    '<br><br><em>Bitte melde dich bei der Produktion, wenn du Statist bist oder Fragen hast.</em>';
+  restartBtn.style.display = 'inline-block';
+}
+
+// restart
+restartBtn.addEventListener('click', ()=>{
+  startBtn.style.display = 'inline-block';
+  restartBtn.style.display = 'none';
+  resultEl.textContent = 'Bereit für den nächsten Durchgang.';
+});
+
+// start button
+startBtn.addEventListener('click', startGame);
+
+// input events
+canvas.addEventListener('touchstart', handleTap, {passive:false});
+canvas.addEventListener('mousedown', handleTap);
+
+// initial setup
+(function init(){
+  // set canvas CSS height (so canvas.getBoundingClientRect works)
+  const rect = canvas.getBoundingClientRect();
+  if(rect.width === 0){
+    // ensure canvas has some height if not yet laid out
+    canvas.style.height = '360px';
+  }
+  resizeCanvas();
+  drawStatic();
+  resultEl.textContent = 'Tippe "Spiel starten" und spiele per Touch. Viel Spaß!';
+})();
+
 </script>
-
 </body>
 </html>
