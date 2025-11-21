@@ -1,33 +1,145 @@
 <!doctype html>
 <html lang="de">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Kontonix — Nur für Statisten</title>
-  <style>
-    body{font-family:Inter,Arial,Helvetica,sans-serif; background:#06121a; color:#e7c6a3;
-         display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0;}
-    .card{background:#041018; padding:28px; border-radius:14px; text-align:center; width:520px;
-          box-shadow:0 10px 30px rgba(0,0,0,0.6); border:1px solid rgba(231,198,163,0.06)}
-    img{max-width:200px; height:auto; margin-bottom:18px; display:block; margin-left:auto; margin-right:auto;}
-    h1{margin:6px 0 8px; font-size:22px;}
-    p.lead{color:#b9a089; margin:0 0 14px;}
-    .muted{font-size:13px; color:#7f6a57;}
-    .cta{margin-top:14px; padding:10px 14px; display:inline-block; border-radius:8px;
-         background:#b76b34; color:#fff; text-decoration:none; font-weight:600;}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Was hier wohl ist…</title>
+<style>
+  body{
+    margin:0;
+    background:#0c1014;
+    color:#e6d2b0;
+    font-family:Inter,Arial,Helvetica,sans-serif;
+    display:flex;
+    justify-content:center;
+    padding:20px;
+  }
+  .wrap{
+    max-width:600px; 
+    text-align:center;
+    padding:20px;
+    background:#11161c;
+    border-radius:16px;
+    box-shadow:0 0 40px rgba(0,0,0,0.4);
+  }
+  h1{margin-top:0;}
+  canvas{
+    background:#1a222c;
+    border-radius:12px;
+    margin-top:16px;
+    width:100%;
+    max-width:560px;
+  }
+  #msg{
+    margin-top:14px;
+    font-size:14px;
+    color:#92806d;
+  }
+  #startBtn{
+    margin-top:18px;
+    background:#b4783a;
+    border:0;
+    padding:10px 16px;
+    color:white;
+    border-radius:8px;
+    font-weight:600;
+    cursor:pointer;
+  }
+</style>
 </head>
 <body>
-  <div class="card">
-    <!-- Wenn du die Datei lokal verwendest: benutze den kompletten Pfad -->
-    <img src="/mnt/data/LOGO KONTONIX.png" alt="Kontonix Logo" />
-    <!-- Wenn du das Logo in dein Repo hochlädst: benutze stattdessen z.B. -->
-    <!-- <img src="LOGO-KONTONIX.png" alt="Kontonix Logo" /> -->
-    <h1>Willkommen bei Kontonix Finanz AG</h1>
-    <p class="lead">Diese Seite ist für Statisten. Wirkliche Konten werden hier nicht verwahrt.</p>
-    <div class="muted">Tipp: Drück auf den Button — aber nur wenn du zum Set gehörst.</div>
-    <a class="cta" href="#" onclick="alert('Achtung: Statisten-Neugier erkannt. Bitte melde dich am Set.');return false;">Nur neugierig</a>
-    <p class="muted" style="margin-top:12px;">Ref: KX-SET-47 • Keine echte Bank</p>
-  </div>
+<div class="wrap">
+  <h1>Was hier wohl ist…?</h1>
+  <p>Willkommen im <b>geheimen Set-Portal</b> der Kontonix Finanz AG.<br>
+  Damit du nicht nur neugierig bist, gibt’s hier ein kleines Spiel.</p>
+
+  <button id="startBtn">Mini-Game starten</button>
+
+  <canvas id="game" width="560" height="360"></canvas>
+  <div id="msg">Fange fallende Symbole, um die Kontonix-Kurve zu retten!</div>
+</div>
+
+<script>
+// ----- Mini Game: Fallende Symbole fangen -----
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let player = { x: canvas.width/2 - 40, y: canvas.height - 35, w: 80, h: 20 };
+let items = [];
+let score = 0;
+let running = false;
+
+// Steuerung
+document.addEventListener("mousemove", e => {
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  player.x = x - player.w/2;
+});
+
+// Neues Item
+function spawnItem(){
+  items.push({
+    x: Math.random() * (canvas.width - 20),
+    y: -30,
+    speed: 2 + Math.random()*2,
+    symbol: Math.random() < 0.5 ? "💸" : "📉"
+  });
+}
+
+// Game Loop
+function loop(){
+  if(!running) return;
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // Zeichne Spieler
+  ctx.fillStyle = "#b4783a";
+  ctx.fillRect(player.x, player.y, player.w, player.h);
+
+  // Items bewegen
+  items.forEach((it, i) => {
+    it.y += it.speed;
+    ctx.font = "28px sans-serif";
+    ctx.fillText(it.symbol, it.x, it.y);
+
+    // Kollision
+    if(it.y > player.y - 5 && it.x > player.x - 15 && it.x < player.x + player.w){
+      score++;
+      items.splice(i,1);
+    }
+
+    // Entfernen wenn unten raus
+    if(it.y > canvas.height + 50) items.splice(i,1);
+  });
+
+  // Ab und zu neues Item
+  if(Math.random() < 0.04) spawnItem();
+
+  requestAnimationFrame(loop);
+}
+
+// Start
+document.getElementById("startBtn").onclick = () => {
+  if(running) return;
+  running = true;
+  score = 0;
+  items = [];
+  document.getElementById("msg").textContent = "Spiel läuft… rette die Kontonix-Kurve!";
+  
+  loop();
+
+  // Nach 15 Sekunden endet das Game
+  setTimeout(()=>{
+    running = false;
+    document.getElementById("msg").innerHTML =
+      "Ergebnis: <b>" + score + "</b> gefangene Kurse.<br><br>" +
+      (score > 10 
+        ? "Glückwunsch! Du wärst bei Kontonix vermutlich Abteilungsleiter – oder wenigstens Praktikant am Set."
+        : "Hm… vielleicht besser am Set bleiben. Bankwesen ist nicht für jeden gemacht 😄");
+  }, 15000);
+};
+</script>
+
 </body>
 </html>
