@@ -1,136 +1,33 @@
 <!doctype html>
 <html lang="de">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Staat & Sicher Bank — Kunden-Service</title>
-<style>
-  :root{
-    --bg:#f4f7fb; --card:#ffffff; --accent:#0b4f77; --muted:#6b7280;
-    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  }
-  body{background:linear-gradient(180deg,#eef6fb 0%,var(--bg) 100%); margin:0; padding:24px; color:#0f1724;}
-  .wrap {max-width:820px; margin:24px auto; }
-  header {display:flex; gap:16px; align-items:center;}
-  .logo {width:72px; height:72px; border-radius:10px; background:linear-gradient(135deg,var(--accent),#2a9db0); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:20px; box-shadow:0 6px 16px rgba(11,79,119,0.12);}
-  h1{font-size:20px;margin:0;}
-  p.lead{margin:6px 0 18px;color:var(--muted);}
-  .card{background:var(--card); padding:18px; border-radius:12px; box-shadow:0 6px 18px rgba(15,23,36,0.06); margin-bottom:14px;}
-  .small{font-size:13px;color:var(--muted);}
-  .actions{display:flex; gap:8px; margin-top:10px;}
-  button{background:var(--accent); color:#fff; border:0; padding:8px 12px; border-radius:8px; cursor:pointer;}
-  button.ghost{background:transparent;color:var(--accent); border:1px solid rgba(11,79,119,0.12);}
-  .fake-agb{height:110px; overflow:auto; font-family:monospace; font-size:12px; background:#fbfdff; padding:10px; border-radius:8px; border:1px dashed #e6eef4;}
-  .loading{height:12px; background:#e6eef4; border-radius:10px; overflow:hidden; position:relative;}
-  .bar{height:100%; width:0%; background:linear-gradient(90deg,#0b4f77,#2a9db0); transition:width 1.4s linear;}
-  .muted{color:var(--muted); font-size:13px;}
-  footer{font-size:12px;color:var(--muted); margin-top:8px;}
-  .bigcenter{display:flex; align-items:center; justify-content:center; height:160px; color:var(--muted);}
-  .danger{color:#b91c1c; font-weight:600;}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kontonix — Nur für Statisten</title>
+  <style>
+    body{font-family:Inter,Arial,Helvetica,sans-serif; background:#06121a; color:#e7c6a3;
+         display:flex; align-items:center; justify-content:center; min-height:100vh; margin:0;}
+    .card{background:#041018; padding:28px; border-radius:14px; text-align:center; width:520px;
+          box-shadow:0 10px 30px rgba(0,0,0,0.6); border:1px solid rgba(231,198,163,0.06)}
+    img{max-width:200px; height:auto; margin-bottom:18px; display:block; margin-left:auto; margin-right:auto;}
+    h1{margin:6px 0 8px; font-size:22px;}
+    p.lead{color:#b9a089; margin:0 0 14px;}
+    .muted{font-size:13px; color:#7f6a57;}
+    .cta{margin-top:14px; padding:10px 14px; display:inline-block; border-radius:8px;
+         background:#b76b34; color:#fff; text-decoration:none; font-weight:600;}
+  </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div class="logo">SS</div>
-      <div>
-        <h1>Staat &amp; Sicher Bank</h1>
-        <p class="lead">Schnell. Seriös. Unnötig kompliziert.</p>
-      </div>
-    </header>
-
-    <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div>
-          <div class="small">Kundenservice • Sicher anmelden</div>
-          <strong id="headline">Kontoüberprüfung erforderlich</strong>
-        </div>
-        <div class="small">Ref: <span id="ref">SB-2025-0<span id="refnum">47</span></span></div>
-      </div>
-
-      <div style="margin-top:12px;">
-        <div class="small">Sicherheits-Status</div>
-        <div class="loading" style="margin-top:8px;">
-          <div class="bar" id="bar"></div>
-        </div>
-        <div style="display:flex; justify-content:space-between; margin-top:8px;">
-          <div class="muted" id="status">Initialisiere...</div>
-          <div class="muted">geschätzt: 00:47</div>
-        </div>
-      </div>
-
-      <div class="actions">
-        <button onclick="fakeTAN()">TAN generieren</button>
-        <button class="ghost" onclick="showAGB()">AGB anzeigen</button>
-        <button class="ghost" onclick="thanks()">Nur neugierig</button>
-      </div>
-
-      <div id="extra" style="margin-top:12px;"></div>
-    </div>
-
-    <div class="card">
-      <div class="small">Service-Humor (nur für Set)</div>
-      <div class="fake-agb" id="agb">
-        <p><strong>AGB — Version 99.99 (gekürzte Fassung)</strong></p>
-        <p>Die nachfolgenden Bedingungen regeln die Nutzung unseres Service-Ökosystems. Indem Sie fortfahren, erklären Sie sich einverstanden mit (a) der standardmäßigen Unlesbarkeit, (b) mindestens sieben Fußnoten und (c) einer möglichen Haftung für banale Streitfragen.</p>
-        <p>1. Die Bank ist nicht verantwortlich für verlorene Socken.<br>2. Sämtliche TANs können zur Verbesserung des Kaffees verwendet werden.<br>3. Sollte ein Kunde klagen, so soll zunächst ein Formular in dreifacher Ausfertigung ausgefüllt werden.</p>
-      </div>
-    </div>
-
-    <div class="card" id="metaCard">
-      <div class="bigcenter">
-        <div>
-          <div style="text-align:center;">
-            <div style="font-weight:700; margin-bottom:6px;">Danke, dass du gescannt hast</div>
-            <div class="small">Das macht sonst niemand.</div>
-          </div>
-        </div>
-      </div>
-      <footer>Diese Seite ist Teil der Filmrequisite. Keine echte Bank. Alle Rechte vorbehalten.</footer>
-    </div>
+  <div class="card">
+    <!-- Wenn du die Datei lokal verwendest: benutze den kompletten Pfad -->
+    <img src="/mnt/data/LOGO KONTONIX.png" alt="Kontonix Logo" />
+    <!-- Wenn du das Logo in dein Repo hochlädst: benutze stattdessen z.B. -->
+    <!-- <img src="LOGO-KONTONIX.png" alt="Kontonix Logo" /> -->
+    <h1>Willkommen bei Kontonix Finanz AG</h1>
+    <p class="lead">Diese Seite ist für Statisten. Wirkliche Konten werden hier nicht verwahrt.</p>
+    <div class="muted">Tipp: Drück auf den Button — aber nur wenn du zum Set gehörst.</div>
+    <a class="cta" href="#" onclick="alert('Achtung: Statisten-Neugier erkannt. Bitte melde dich am Set.');return false;">Nur neugierig</a>
+    <p class="muted" style="margin-top:12px;">Ref: KX-SET-47 • Keine echte Bank</p>
   </div>
-
-<script>
-  // Ladebalken, der nie fertig wird (loop)
-  let width = 0;
-  const bar = document.getElementById('bar');
-  const status = document.getElementById('status');
-  function step(){
-    width += Math.random() * 18 + 6; // unvorhersehbarer Sprung
-    if (width > 98) { width = 78 + Math.random()*18; } // nie 100%
-    bar.style.width = width + '%';
-    status.textContent = ['Prüfung läuft…','Verbindung prüfen…','Sicherheitsprotokoll aktiv','TAN anfordern…'][Math.floor(Math.random()*4)];
-    setTimeout(step, 1400 + Math.random()*1800);
-  }
-  step();
-
-  // Fake-TAN-Generator
-  function fakeTAN(){
-    const n = Math.floor(Math.random()*900000)+100000;
-    const box = document.getElementById('extra');
-    box.innerHTML = '<div style="margin-top:10px;padding:10px;border-radius:8px;background:#fbfdff;border:1px solid #eef6fb;"><div style="font-family:monospace;font-size:20px;letter-spacing:2px;">TAN: '+n+'</div><div class="small" style="margin-top:6px;">Diese TAN ist leider abgelaufen. Bitte generieren Sie 47 neue TANs.</div></div>';
-  }
-
-  // AGB anzeigen / scrollen
-  function showAGB(){
-    const a = document.getElementById('agb');
-    a.scrollTop = 0;
-    a.style.border = '1px solid rgba(11,79,119,0.08)';
-    // small visual blink
-    a.animate([{boxShadow:'0 0 0 rgba(11,79,119,0)'},{boxShadow:'0 14px 30px rgba(11,79,119,0.06)'}], {duration:600, easing:'ease-out'});
-  }
-
-  // "Nur neugierig" -> lustiger Text (Set-spezifisch)
-  function thanks(){
-    const meta = document.getElementById('metaCard');
-    meta.querySelector('.bigcenter').innerHTML = '<div style="text-align:center;"><div style="font-weight:700;margin-bottom:6px;">Achtung: Statisten-Neugier erkannt</div><div class="small">Wenn du das hier siehst, bist du eindeutig zu neugierig für Statist.</div></div>';
-  }
-
-  // Refnummer dynamisch erhöhen (kleiner Effekt)
-  setInterval(()=> {
-    const el = document.getElementById('refnum');
-    el.textContent = (parseInt(el.textContent)+1) % 999;
-  }, 2200);
-</script>
 </body>
 </html>
